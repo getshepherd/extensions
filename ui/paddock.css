@@ -1,0 +1,86 @@
+/* Plain HTML elements dressed to sit in Shepherd: tokens for both themes, then the elements themselves.
+   ponytail: no custom elements yet; add one when a page needs something HTML hasn't. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f4f4f5;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent-text: #ffffff;
+  --danger: #dc2626;
+  --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18181b;
+    --surface: #232326;
+    --border: #2f2f33;
+    --text: #e4e4e7;
+    --muted: #8b8b93;
+    --accent: #3b82f6;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 var(--font);
+}
+
+main { max-width: 720px; margin: 0 auto; }
+
+h1 { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
+h2 { font-size: 14px; font-weight: 600; margin: 24px 0 8px; }
+p, small { color: var(--muted); }
+code, pre { font-family: var(--mono); font-size: 12px; }
+pre { background: var(--surface); padding: 12px; border-radius: var(--radius); overflow: auto; }
+a { color: var(--accent); }
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+  border-radius: var(--radius);
+}
+
+button {
+  border: 0;
+  padding: 6px 12px;
+  background: var(--accent);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.1); }
+button.quiet { background: transparent; color: var(--muted); }
+button.quiet:hover { color: var(--text); background: var(--surface); }
+button.danger { background: var(--danger); }
+
+input, textarea, select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 6px 10px;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+
+form { display: flex; gap: 8px; }
+form > input, form > textarea { flex: 1; }
+
+ul { list-style: none; padding: 0; margin: 16px 0; }
+li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+li > :first-child { flex: 1; }

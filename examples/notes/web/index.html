@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes</title>
+  <link rel="stylesheet" href="/_paddock/paddock.css">
+</head>
+<body>
+<main>
+  <h1>Notes</h1>
+  <form id="add">
+    <input name="text" placeholder="A note…" autocomplete="off" required>
+    <button>Add</button>
+  </form>
+  <ul id="notes"></ul>
+  <p id="empty" hidden>No notes yet. Agents add them with <code>notes add --text …</code></p>
+</main>
+<script type="module">
+  import { call, on } from '/_paddock/paddock.js';
+
+  const list = document.getElementById('notes');
+
+  async function load() {
+    const notes = await call('list');
+    document.getElementById('empty').hidden = notes.length > 0;
+    list.replaceChildren(...notes.map((n) => {
+      const li = document.createElement('li');
+      const text = document.createElement('span');
+      text.textContent = n.text;
+      const remove = document.createElement('button');
+      remove.className = 'quiet';
+      remove.textContent = 'Remove';
+      remove.onclick = () => call('remove', { id: n.id });
+      li.append(text, remove);
+      return li;
+    }));
+  }
+
+  document.getElementById('add').onsubmit = async (e) => {
+    e.preventDefault();
+    const input = e.target.elements.text;
+    await call('add', { text: input.value });
+    input.value = '';
+  };
+
+  // The CLI's changes come through here too, so an agent's note shows as it's added.
+  on('changed', load);
+  load();
+</script>
+</body>
+</html>
