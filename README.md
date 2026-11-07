@@ -100,7 +100,7 @@ URL's `?token=` becomes a `SameSite=Strict` cookie named after the extension, an
 ## Start one
 
 ```sh
-go run golang.org/x/tools/cmd/gonew@latest github.com/getshepherd/paddock/examples/demo github.com/you/weather
+go run golang.org/x/tools/cmd/gonew@latest github.com/getshepherd/extensions/examples/demo github.com/you/weather
 cd weather   # change the name in main.go's paddock.New
 go run . install --start shepherd
 ```

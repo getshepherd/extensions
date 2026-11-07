@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/getshepherd/paddock"
+	paddock "github.com/getshepherd/extensions"
 )
 
 //go:embed web

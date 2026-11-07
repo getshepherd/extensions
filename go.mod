@@ -1,3 +1,3 @@
-module github.com/getshepherd/paddock
+module github.com/getshepherd/extensions
 
 go 1.24
