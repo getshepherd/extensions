@@ -1,0 +1,7 @@
+// The demo is a module of its own, so `gonew` can copy it as a template; here it builds against this checkout.
+go 1.24
+
+use (
+	.
+	./examples/demo
+)

@@ -19,11 +19,21 @@ import (
 //go:embed ui
 var ui embed.FS
 
-// state is what the service and the CLI share: where the server listens and the token that lets one in.
+// state is what the service, the CLI and Shepherd share: where the server listens, the token that lets one in, and
+// what Shepherd lists: the name, the description, and when it runs (startLogin or startShepherd).
 type state struct {
-	Port  int    `json:"port"`
-	Token string `json:"token"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Port        int    `json:"port"`
+	Token       string `json:"token"`
+	Start       string `json:"start"`
 }
+
+// When an extension runs: as a service from login on, or while Shepherd runs (Shepherd starts `<binary> serve`).
+const (
+	startLogin    = "login"
+	startShepherd = "shepherd"
+)
 
 func (s state) url() string { return fmt.Sprintf("http://127.0.0.1:%d/?token=%s", s.Port, s.Token) }
 
@@ -38,13 +48,19 @@ func (a *App) loadState() (state, error) {
 	return s, err
 }
 
+func (a *App) saveState(s state) error {
+	b, _ := json.MarshalIndent(s, "", "  ")
+	return os.WriteFile(a.statePath(), b, 0o600)
+}
+
 // ensureState keeps the port and token picked before, so the URL saved in Shepherd keeps working; port, if not 0,
-// replaces the port.
+// replaces the port. The name and description follow the binary.
 func (a *App) ensureState(port int) (state, error) {
 	s, err := a.loadState()
 	if err != nil {
-		s = state{Token: rand.Text()}
+		s = state{Token: rand.Text(), Start: startLogin}
 	}
+	s.Name, s.Description = a.Name, a.Description
 	if port != 0 {
 		s.Port = port
 	}
@@ -56,8 +72,7 @@ func (a *App) ensureState(port int) (state, error) {
 		s.Port = l.Addr().(*net.TCPAddr).Port
 		l.Close()
 	}
-	b, _ := json.Marshal(s)
-	return s, os.WriteFile(a.statePath(), b, 0o600)
+	return s, a.saveState(s)
 }
 
 func (a *App) serve() error {
@@ -75,6 +90,8 @@ func (a *App) handler(token string) http.Handler {
 	mux.HandleFunc("POST /api/{name}", a.api)
 	mux.HandleFunc("GET /_paddock/events", a.events)
 	mux.HandleFunc("GET /_paddock/ping", func(w http.ResponseWriter, _ *http.Request) { io.WriteString(w, "ok") })
+	mux.HandleFunc("GET /_paddock/icons/{name}", icon)
+	mux.HandleFunc("GET /_paddock/icons.json", iconNames)
 	files, _ := fs.Sub(ui, "ui")
 	mux.Handle("GET /_paddock/", http.StripPrefix("/_paddock/", http.FileServerFS(files)))
 	if a.web != nil {

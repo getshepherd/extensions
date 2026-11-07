@@ -1,4 +1,7 @@
-// The page's side of paddock: call(name, args) runs a command, on(event, fn) hears what Ctx.Emit sends.
+// The page's side of paddock: call(name, args) runs a command, on(event, fn) hears what Ctx.Emit sends; importing it
+// also brings the UI elements, toast() and confirm().
+
+export { toast, confirm } from './elements.js';
 
 export async function call(name, args = {}) {
   const res = await fetch('/api/' + encodeURIComponent(name), {

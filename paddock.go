@@ -1,4 +1,4 @@
-// Package paddock builds a local extension into one binary: a web page (for Shepherd's Web pages, or any browser),
+// Package paddock builds a local extension into one binary: a web page (for Shepherd's Extensions, or any browser),
 // the HTTP API behind it, a CLI over the same commands for agents, and the service that keeps it running.
 package paddock
 
@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"sync"
 )
@@ -72,12 +73,32 @@ func Command[In, Out any](a *App, name, help string, fn func(*Ctx, In) (Out, err
 	}})
 }
 
-// Dir is where the extension keeps its state and may keep its data: <user config dir>/paddock/<name>.
+// Dir is the extension's folder, where Shepherd finds it: <Shepherd's config dir>/extensions/<name>. install puts
+// the binary there beside state.json and the log; the extension may keep its data there too.
 func (a *App) Dir() string {
-	base, _ := os.UserConfigDir()
-	d := filepath.Join(base, "paddock", a.Name)
+	d := filepath.Join(ExtensionsDir(), a.Name)
 	_ = os.MkdirAll(d, 0o700)
 	return d
+}
+
+// ExtensionsDir is where Shepherd looks for extensions, inside its own config folder: macOS's Application Support,
+// Windows' roaming AppData, else the XDG config folder (as Shepherd's settings.rs has it).
+func ExtensionsDir() string {
+	base, _ := os.UserConfigDir()
+	shepherd := "Shepherd"
+	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" {
+		shepherd = "shepherd"
+	}
+	return filepath.Join(base, shepherd, "extensions")
+}
+
+// binPath is where install keeps the binary: <Dir>/<name>, .exe on Windows.
+func (a *App) binPath() string {
+	name := a.Name
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	return filepath.Join(a.Dir(), name)
 }
 
 // Emit sends an event to every open page.
@@ -125,7 +146,7 @@ func (a *App) run(args []string) error {
 	case "install":
 		return a.install(args[1:])
 	case "uninstall":
-		return a.uninstall()
+		return a.uninstall(args[1:])
 	case "start", "stop":
 		return a.service(args[0])
 	case "status":
@@ -151,22 +172,23 @@ func (a *App) run(args []string) error {
 }
 
 func (a *App) usage() {
-	fmt.Printf("%s: %s\n\nService:\n", a.Name, a.Description)
+	fmt.Printf("%s: %s\n\nSetup:\n", a.Name, a.Description)
 	for _, l := range [][2]string{
-		{"install [--port N]", "run as a service, now and after login; prints the page's URL"},
-		{"uninstall", "remove the service (data stays in " + a.Dir() + ")"},
+		{"install [--port N]", "copy into Shepherd's extensions, write the skill, start it; prints the page's URL"},
+		{"  [--start login|shepherd]", "run as a service from login on (default), or only while Shepherd runs"},
+		{"uninstall [--purge]", "remove it (its data stays in " + a.Dir() + " unless --purge)"},
 		{"start | stop | status", "the service; stop lasts until the next login"},
-		{"logs [-f]", "the service's output"},
-		{"url", "the page's address, for Shepherd's Web pages or a browser"},
+		{"logs [-f]", "its output"},
+		{"url", "the page's address, for Shepherd or a browser"},
 		{"serve", "run in the foreground"},
-		{"skill [--install]", "a SKILL.md that teaches agents this CLI"},
+		{"skill [--install]", "the SKILL.md that teaches agents this CLI"},
 	} {
-		fmt.Printf("  %-22s %s\n", l[0], l[1])
+		fmt.Printf("  %-26s %s\n", l[0], l[1])
 	}
 	if len(a.cmds) > 0 {
 		fmt.Println("\nCommands (" + a.Name + " <command> -h for flags):")
 		for _, c := range a.cmds {
-			fmt.Printf("  %-22s %s\n", c.name, c.help)
+			fmt.Printf("  %-26s %s\n", c.name, c.help)
 		}
 	}
 }

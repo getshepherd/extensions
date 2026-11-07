@@ -1,29 +1,78 @@
-/* Plain HTML elements dressed to sit in Shepherd: tokens for both themes, then the elements themselves.
-   ponytail: no custom elements yet; add one when a page needs something HTML hasn't. */
+/* Plain HTML dressed as Shepherd draws its own UI (Zeron's widgets), then the few things HTML lacks.
+
+   The theme is variables only: the names are Shepherd's theme tokens (Zeron's ThemeColors), and every rule below reads
+   them, never a color of its own. The values here are Shepherd's default themes (Ayu Light and Ayu Dark) for a page
+   opened outside Shepherd; Shepherd, or a page, sets the same variables on :root to bring its own theme. */
+
+@font-face { font-family: "Geist"; src: url("fonts/Geist.ttf") format("truetype"); font-weight: 400; }
+@font-face { font-family: "Geist"; src: url("fonts/Geist-Medium.ttf") format("truetype"); font-weight: 500; }
+@font-face { font-family: "Geist"; src: url("fonts/Geist-SemiBold.ttf") format("truetype"); font-weight: 600 700; }
+@font-face { font-family: "Geist Mono"; src: url("fonts/GeistMono.ttf") format("truetype"); }
 
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
-  --surface: #f4f4f5;
-  --border: #e4e4e7;
-  --text: #18181b;
-  --muted: #71717a;
-  --accent: #2563eb;
-  --accent-text: #ffffff;
-  --danger: #dc2626;
-  --radius: 8px;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --background: #fcfcfc;
+  --shell: #f8f9fa;
+  --raised: #e6e9ed;
+  --card: #fafafa;
+  --dialog: #fafafa;
+  --input: #fafafa;
+  --hover: rgb(0 0 0 / 0.06);
+  --selected: rgb(26 26 26 / 0.06);
+  --kbd: rgb(26 26 26 / 0.06);
+  --focus: var(--accent);
+  --scrollbar: color-mix(in srgb, var(--text-muted) 35%, transparent);
+  --scrollbar-active: color-mix(in srgb, var(--text-muted) 60%, transparent);
+  --border: rgb(0 0 0 / 0.12);
+  --border-strong: rgb(0 0 0 / 0.22);
+  --text: #5c6166;
+  --text-muted: #687688;
+  --text-faint: #969da8;
+  --accent: #d07e0c;
+  --on-accent: #ffffff;
+  --danger: #e65050;
+  --warning: #eba400;
+  --success: #6cbf43;
+  --on-color: #ffffff;
+  --scrim: rgb(0 0 0 / 0.35);
+  --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --switch-thumb: #ffffff;
+  --switch-thumb-edge: rgb(0 0 0 / 0.08);
+  --switch-off: rgb(92 97 102 / 0.10);
+  --switch-on-edge: rgb(255 255 255 / 0.12);
+  /* Zeron's loader: its sunrise gradient, a tint per row of the 3×3 spinner. */
+  --spinner-1: #b6d3ef;
+  --spinner-2: #edb185;
+  --spinner-3: #f888a0;
+  --font: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-size: 13px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #18181b;
-    --surface: #232326;
-    --border: #2f2f33;
-    --text: #e4e4e7;
-    --muted: #8b8b93;
-    --accent: #3b82f6;
+    --background: #10141c;
+    --shell: #0d1017;
+    --raised: #1b1f29;
+    --card: #141821;
+    --dialog: #171b25;
+    --input: rgb(27 31 41 / 0.72);
+    --hover: rgb(255 255 255 / 0.11);
+    --selected: rgb(235 235 235 / 0.11);
+    --kbd: rgb(235 235 235 / 0.06);
+    --border: rgb(255 255 255 / 0.10);
+    --border-strong: rgb(255 255 255 / 0.18);
+    --text: #bfbdb6;
+    --text-muted: #8a9199;
+    --text-faint: #5a6673;
+    --accent: #e6b450;
+    --on-accent: #000000;
+    --danger: #d95757;
+    --warning: #ffb454;
+    --success: #70bf56;
+    --switch-thumb: rgb(255 255 255 / 0.96);
+    --switch-thumb-edge: rgb(0 0 0 / 0.10);
+    --switch-off: rgb(191 189 182 / 0.18);
   }
 }
 
@@ -32,55 +81,379 @@
 body {
   margin: 0;
   padding: 24px;
-  background: var(--bg);
+  background: var(--shell);
   color: var(--text);
-  font: 13px/1.5 var(--font);
+  font: var(--font-size)/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
 }
 
 main { max-width: 720px; margin: 0 auto; }
 
+/* Focus, the same everywhere and always visible to the keyboard (WCAG 2.4.7): a 2 px ring in --focus, 2 px out, on
+   anything that takes a press; a field takes it as its border plus a soft halo, whether clicked or tabbed into, since
+   typing goes there. Menu rows show it as the hover wash, as native menus do. */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input:not([type=checkbox], [type=radio], [type=range]):focus, select:focus, textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent);
+}
+input:not([type=checkbox], [type=radio], [type=range]):focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+a:focus-visible { border-radius: 3px; }
+
+/* What can be pressed shows it. (Shepherd's own window may reset the cursor over the page each frame.) */
+button, select, summary, label:has(> input:not([type=text], [type=search], [type=email], [type=password], [type=number])),
+input[type=checkbox], input[type=radio], input[type=range], [role=tab], [popovertarget] { cursor: pointer; }
+:disabled { cursor: default; }
+
+/* Shepherd's scrollbar: a 6 px round thumb 2 px off the edge, no track. */
+::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 5px; background: var(--scrollbar) padding-box; }
+::-webkit-scrollbar-thumb:active { background-color: var(--scrollbar-active); }
+::-webkit-scrollbar-corner { background: transparent; }
+
 h1 { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
-h2 { font-size: 14px; font-weight: 600; margin: 24px 0 8px; }
-p, small { color: var(--muted); }
+h2 { font-size: 13px; font-weight: 600; margin: 24px 0 8px; }
+p, small { color: var(--text-muted); }
+small { font-size: 11px; }
 code, pre { font-family: var(--mono); font-size: 12px; }
-pre { background: var(--surface); padding: 12px; border-radius: var(--radius); overflow: auto; }
+pre { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 8px; overflow: auto; }
 a { color: var(--accent); }
+/* Key caps, as Shepherd's command panel shows a chord: <kbd>⌘</kbd> <kbd>K</kbd>. */
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--kbd);
+  color: var(--text-muted);
+  font: 11px/1.4 var(--font);
+  white-space: nowrap;
+}
 
 button, input, textarea, select {
   font: inherit;
   color: inherit;
-  border-radius: var(--radius);
 }
 
+/* Buttons are Zeron's: primary (btnPrimary) by default, .secondary, .quiet (btnGhost), .danger (btnDestructive);
+   .small; .icon for one icon and no text. aria-busy="true" swaps in a spinner and stops clicks. Controls are 28 px
+   high, as Shepherd's rows and tabs are, so a button, a field and a select line up. */
 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
   border: 0;
-  padding: 6px 12px;
+  border-radius: 8px;
   background: var(--accent);
-  color: var(--accent-text);
+  color: var(--on-accent);
+  font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s, opacity 0.1s;
 }
-button:hover { filter: brightness(1.1); }
-button.quiet { background: transparent; color: var(--muted); }
-button.quiet:hover { color: var(--text); background: var(--surface); }
-button.danger { background: var(--danger); }
+button:hover { opacity: 0.9; }
+button.secondary { background: var(--hover); color: var(--text); }
+button.secondary:hover { opacity: 1; background: var(--selected); }
+button.quiet { background: transparent; color: var(--text-muted); font-weight: 400; }
+button.quiet:hover { opacity: 1; background: var(--hover); color: var(--text); }
+button.danger { background: var(--danger); color: var(--on-color); }
+button.small { height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; }
+button.icon { width: 28px; padding: 0; }
+button.small.icon { width: 22px; }
+button:disabled { opacity: 0.45; cursor: default; }
+button[aria-busy="true"] { pointer-events: none; }
 
-input, textarea, select {
+/* Fields: Zeron's input fill, a hairline border, the accent on focus. */
+input:not([type=checkbox], [type=radio], [type=range]), select, textarea {
+  height: 28px;
+  padding: 0 10px;
   border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--input);
   outline: none;
 }
-input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { height: auto; padding: 6px 10px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--text-faint); }
+input:disabled, select:disabled, textarea:disabled { opacity: 0.45; }
+/* The select's own arrow differs per engine: a chevron drawn from two gradients in the muted color instead. */
+select {
+  appearance: none;
+  padding-right: 28px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: right 14px center, right 10px center;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+label { display: inline-flex; align-items: center; gap: 8px; }
 
-form { display: flex; gap: 8px; }
-form > input, form > textarea { flex: 1; }
+/* Checkbox and radio, drawn the same in every engine. */
+input[type=checkbox]:not([role=switch]), input[type=radio] {
+  appearance: none;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--input);
+  cursor: pointer;
+}
+input[type=radio] { border-radius: 50%; }
+input[type=checkbox]:not([role=switch]):checked { background: var(--accent); border-color: var(--accent); }
+input[type=checkbox]:not([role=switch]):checked::after {
+  content: "";
+  position: absolute;
+  left: 4.5px;
+  top: 1.5px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--on-accent);
+  border-width: 0 1.75px 1.75px 0;
+  transform: rotate(45deg);
+}
+input[type=radio]:checked { border-color: var(--accent); background: var(--on-accent); box-shadow: inset 0 0 0 4px var(--accent); }
+input[type=range], progress { accent-color: var(--accent); }
+
+/* Zeron's pill switch: <input type="checkbox" role="switch">. A 44.8 × 20.8 track, a 24 px thumb sliding over 180 ms,
+   and the on and off marks (a bar, a ring) beneath it, so the thumb covers whichever doesn't apply. */
+input[type=checkbox][role=switch] {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 44.8px;
+  height: 20.8px;
+  margin: 4px 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at calc(100% - 9.6px) 50%, transparent 2.6px, var(--text-muted) 2.7px, var(--text-muted) 3.4px, transparent 3.5px),
+    var(--switch-off);
+  box-shadow: inset 0 0 0 1px var(--border);
+  cursor: pointer;
+  transition: background-color 0.18s;
+}
+input[type=checkbox][role=switch]::after {
+  content: "";
+  position: absolute;
+  left: 9.6px;
+  top: 6.8px;
+  width: 1.2px;
+  height: 7.2px;
+  border-radius: 1px;
+  background: var(--switch-thumb);
+}
+input[type=checkbox][role=switch]::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 1.6px;
+  left: 1.6px;
+  width: 24px;
+  height: 17.6px;
+  border-radius: 999px;
+  background: var(--switch-thumb);
+  box-shadow: 0 0 0 1px var(--switch-thumb-edge);
+  transition: transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+}
+input[type=checkbox][role=switch]:checked {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--switch-on-edge);
+}
+input[type=checkbox][role=switch]:checked::before { transform: translateX(17.6px); }
+input[type=checkbox][role=switch]:disabled { opacity: 0.45; cursor: default; }
+
+form { display: flex; gap: 8px; align-items: center; }
+form > input:not([type=checkbox], [type=radio]), form > textarea { flex: 1; }
 
 ul { list-style: none; padding: 0; margin: 16px 0; }
 li {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--border);
 }
 li > :first-child { flex: 1; }
+ul.rows > li:hover { background: var(--hover); }
+
+/* Tables: a muted, sticky header row over the data; rows light up under the pointer. */
+table { width: 100%; border-collapse: collapse; }
+th {
+  position: sticky;
+  top: 0;
+  background: var(--shell);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+th, td { height: 32px; padding: 0 8px; border-bottom: 1px solid var(--border); }
+td { color: var(--text); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: var(--hover); }
+
+/* Zeron's loaders. <p-spinner>: the 3×3 matrix, a tint per row, each cell flaring once every 0.75 s with the pulse
+   travelling up. <p-spinner mini>: 2×3 in the text's color, the pulse going round. --cell sizes the dots. */
+p-spinner {
+  --cell: 2.5px;
+  display: inline-grid;
+  grid-template-columns: repeat(3, var(--cell));
+  gap: calc(var(--cell) / 2);
+  vertical-align: middle;
+}
+p-spinner[mini] { --cell: 3px; grid-template-columns: repeat(2, var(--cell)); }
+p-spinner > i {
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 50%;
+  background: currentColor;
+  animation: p-pulse 0.75s linear infinite;
+}
+p-spinner:not([mini]) > i:nth-child(-n+3) { background: var(--spinner-1); }
+p-spinner:not([mini]) > i:nth-child(n+4):nth-child(-n+6) { background: var(--spinner-2); }
+p-spinner:not([mini]) > i:nth-child(n+7) { background: var(--spinner-3); }
+@keyframes p-pulse {
+  0% { opacity: 1; }
+  45% { opacity: 0.1; }
+  92% { opacity: 0.1; }
+  100% { opacity: 1; }
+}
+progress { width: 100%; height: 6px; }
+.skeleton {
+  display: block;
+  height: 1em;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--hover) 25%, var(--selected) 50%, var(--hover) 75%) 0 0 / 200% 100%;
+  animation: p-shimmer 1.2s linear infinite;
+}
+@keyframes p-shimmer { to { background-position: -200% 0; } }
+
+/* <p-icon name="folder">: any of Solar's Linear icons (/_paddock/icons.json lists them), in the text's color. */
+p-icon {
+  display: inline-block;
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+  vertical-align: -0.25em;
+}
+button p-icon { width: 14px; height: 14px; }
+button.icon p-icon { width: 16px; height: 16px; }
+button.small.icon p-icon { width: 14px; height: 14px; }
+
+/* Zeron's dialog: a 360 px card, 16 px round, over a 35 % scrim; it fades in rising 2 px over 180 ms.
+   Open a <dialog> with showModal(); paddock.js's confirm() makes one. */
+dialog {
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--dialog);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+dialog[open] { animation: p-dialog-in 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
+dialog::backdrop { background: var(--scrim); animation: p-fade-in 0.18s; }
+dialog h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--text); }
+dialog p { margin: 0; }
+dialog form { margin-top: 12px; }
+dialog footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+@keyframes p-dialog-in { from { opacity: 0; transform: translateY(2px); } }
+@keyframes p-fade-in { from { opacity: 0; } }
+
+/* toast() from paddock.js. The stack is a manual popover, so it stays above open dialogs. */
+.p-toasts {
+  inset: auto 16px 16px auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+.p-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  animation: p-menu-in 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.p-toast p-icon { width: 16px; height: 16px; color: var(--text-muted); }
+.p-toast.error p-icon { color: var(--danger); }
+.p-toast.success p-icon { color: var(--success); }
+
+/* <p-tabs>: Shepherd's tab strip, pills 28 px high; the picked one sits on the selected wash.
+   A <nav> of buttons, then a <section> each. */
+p-tabs { display: block; }
+p-tabs > nav { display: flex; gap: 2px; margin-bottom: 16px; overflow-x: auto; }
+p-tabs > nav > button {
+  height: 28px;
+  padding: 0 12px 0 8px;
+  gap: 6px;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+p-tabs > nav > button:hover { opacity: 1; background: var(--hover); }
+p-tabs > nav > button[aria-selected="true"] { background: var(--selected); color: var(--text); }
+p-tabs > nav > button p-icon { width: 16px; height: 16px; }
+
+/* Zeron's menu card: <button popovertarget="m">…</button> <menu id="m" popover><button>…</button></menu>.
+   10 px round, 4 px in, rows 28 px with a 14 px muted icon; it fades up from 30 % and drops 2 px into place over
+   140 ms. paddock.js puts it under its button and closes it when an item is picked. */
+menu[popover] {
+  position: fixed;
+  margin: 0;
+  inset: auto;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+menu[popover]:popover-open { animation: p-menu-in 0.14s cubic-bezier(0.22, 1, 0.36, 1); }
+menu[popover] > button {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  gap: 8px;
+  justify-content: flex-start;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font-weight: 400;
+}
+menu[popover] > button:hover, menu[popover] > button:focus-visible { opacity: 1; background: var(--hover); outline: none; }
+menu[popover] > button p-icon { color: var(--text-muted); }
+menu[popover] > button.danger, menu[popover] > button.danger p-icon { color: var(--danger); }
+menu[popover] > button kbd { margin-left: auto; padding-left: 16px; background: none; padding-right: 0; }
+menu[popover] > hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+@keyframes p-menu-in { from { opacity: 0.3; transform: translateY(-2px); } }
+
+/* Motion is decoration: with reduced motion asked for, things appear in place and spinners slow to a glow. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation-duration: 0.01ms !important; }
+  p-spinner > i { animation-duration: 2s !important; }
+}

@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -64,5 +66,53 @@ func TestCommandOverHTTPAndFlags(t *testing.T) {
 	resp.Body.Close()
 	if c := resp.Cookies(); resp.StatusCode != 302 || len(c) != 1 || c[0].Name != "paddock-t" || c[0].Value != "secret" {
 		t.Fatalf("token to cookie: %d %v", resp.StatusCode, c)
+	}
+}
+
+func TestIcons(t *testing.T) {
+	srv := httptest.NewServer(New("t", "test", nil).handler("secret"))
+	defer srv.Close()
+	get := func(path string) (int, string) {
+		req, _ := http.NewRequest("GET", srv.URL+path, nil)
+		req.Header.Set("Authorization", "Bearer secret")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		b, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, string(b)
+	}
+	if code, body := get("/_paddock/icons/folder.svg"); code != 200 || !strings.HasPrefix(body, "<svg") {
+		t.Fatalf("folder: %d %.40s", code, body)
+	}
+	if code, _ := get("/_paddock/icons/no-such-icon.svg"); code != 404 {
+		t.Fatalf("an unknown icon: %d", code)
+	}
+	var names []string
+	if _, body := get("/_paddock/icons.json"); json.Unmarshal([]byte(body), &names) != nil || len(names) < 1000 {
+		t.Fatalf("icons.json: %d names", len(names))
+	}
+}
+
+func TestPlaceCopiesTheBinaryIntoShepherdsExtensions(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)                                      // macOS: ~/Library/Application Support
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config")) // elsewhere
+	a := New("t", "test", nil)
+	if !strings.HasPrefix(a.Dir(), home) || filepath.Base(filepath.Dir(a.Dir())) != "extensions" {
+		t.Fatalf("Dir %s: not <home>/…/extensions/t", a.Dir())
+	}
+	for range 2 { // the second is an update, over the first
+		p, err := a.place()
+		if err != nil {
+			t.Fatal(err)
+		}
+		self, _ := os.Executable()
+		want, _ := os.Stat(self)
+		got, err := os.Stat(p)
+		if err != nil || got.Size() != want.Size() || got.Mode()&0o100 == 0 {
+			t.Fatalf("%s: %v, %d bytes of %d, mode %v", p, err, got.Size(), want.Size(), got.Mode())
+		}
 	}
 }

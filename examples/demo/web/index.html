@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>paddock demo</title>
+  <link rel="stylesheet" href="/_paddock/paddock.css">
+  <style>
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+    .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 4px; }
+    .icons button { height: auto; flex-direction: column; gap: 4px; padding: 10px 4px; font-size: 11px; white-space: normal; word-break: break-word; }
+    .icons p-icon { width: 24px; height: 24px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>paddock demo</h1>
+
+  <p-tabs>
+    <nav>
+      <button><p-icon name="notes"></p-icon> Notes</button>
+      <button><p-icon name="folder"></p-icon> Files</button>
+      <button><p-icon name="widget"></p-icon> Components</button>
+      <button><p-icon name="star"></p-icon> Icons</button>
+    </nav>
+
+    <!-- Commands, events and the CLI: an agent's `demo add` shows up here as it happens. -->
+    <section>
+      <form id="add">
+        <input name="text" placeholder="A note…" autocomplete="off" required>
+        <button>Add</button>
+      </form>
+      <ul id="notes" class="rows"></ul>
+      <p id="empty" hidden>No notes yet. Agents add them with <code>demo add --text …</code></p>
+    </section>
+
+    <!-- The page can't touch the disk; the files and open commands can, and agents get them too. -->
+    <section>
+      <form id="browse">
+        <button type="button" class="secondary icon" id="up" title="Up"><p-icon name="alt-arrow-up"></p-icon></button>
+        <input name="path" placeholder="home folder" autocomplete="off">
+        <button>List</button>
+      </form>
+      <ul id="files" class="rows"></ul>
+    </section>
+
+    <!-- Everything /_paddock/paddock.css and paddock.js give a page. -->
+    <section>
+      <h2>Buttons</h2>
+      <div class="row">
+        <button>Primary</button>
+        <button class="secondary">Secondary</button>
+        <button class="quiet">Quiet</button>
+        <button class="danger">Danger</button>
+        <button disabled>Disabled</button>
+      </div>
+      <div class="row">
+        <button><p-icon name="add-circle"></p-icon> With icon</button>
+        <button class="secondary small"><p-icon name="refresh"></p-icon> Small</button>
+        <button class="secondary icon" title="Settings"><p-icon name="settings"></p-icon></button>
+        <button class="quiet icon" title="Delete"><p-icon name="trash-bin-trash"></p-icon></button>
+        <button id="busy">Save (busy for 2s)</button>
+      </div>
+
+      <h2>Fields</h2>
+      <form onsubmit="return false">
+        <input placeholder="input">
+        <select><option>select</option><option>another</option></select>
+      </form>
+      <form onsubmit="return false" style="margin-top: 8px">
+        <textarea rows="3" placeholder="textarea"></textarea>
+      </form>
+      <div class="row">
+        <label><input type="checkbox" role="switch" checked> Switch</label>
+        <label><input type="checkbox" role="switch"> Off</label>
+        <label><input type="checkbox" checked> Checkbox</label>
+        <label><input type="radio" name="r" checked> Radio</label>
+        <label><input type="radio" name="r"> Another</label>
+      </div>
+
+      <h2>Loading</h2>
+      <div class="row">
+        <p-spinner></p-spinner>
+        <p-spinner style="--cell: 4px"></p-spinner>
+        <p-spinner mini></p-spinner>
+        <small><p-spinner mini></p-spinner> Loading…</small>
+        <button class="secondary" aria-busy="true">Busy</button>
+      </div>
+      <progress value="0.6"></progress>
+      <progress></progress>
+      <div style="display: grid; gap: 6px; margin-top: 8px">
+        <span class="skeleton" style="width: 60%"></span>
+        <span class="skeleton"></span>
+        <span class="skeleton" style="width: 80%"></span>
+      </div>
+
+      <h2>Dialogs and toasts</h2>
+      <div class="row">
+        <button class="secondary" id="confirm">confirm()</button>
+        <button class="secondary" id="confirm-danger">confirm(…, { danger })</button>
+        <button class="secondary" id="dialog-open">&lt;dialog&gt;</button>
+        <button class="secondary" id="toast">toast()</button>
+        <button class="secondary" id="toast-success">success</button>
+        <button class="secondary" id="toast-error">error</button>
+      </div>
+      <dialog id="dialog">
+        <h2>A dialog of your own</h2>
+        <p>Any markup: a form, a list, a picture. Esc or a button closes it.</p>
+        <form method="dialog"><input placeholder="Name"></form>
+        <footer>
+          <button class="secondary" onclick="this.closest('dialog').close()">Cancel</button>
+          <button onclick="this.closest('dialog').close()">Done</button>
+        </footer>
+      </dialog>
+
+      <h2>Menu</h2>
+      <div class="row">
+        <button class="secondary" popovertarget="menu">Actions <p-icon name="alt-arrow-down"></p-icon></button>
+        <menu id="menu" popover>
+          <button><p-icon name="pen"></p-icon> Rename <kbd>F2</kbd></button>
+          <button><p-icon name="copy"></p-icon> Duplicate <kbd>⌘D</kbd></button>
+          <button><p-icon name="share"></p-icon> Share</button>
+          <hr>
+          <button class="danger"><p-icon name="trash-bin-trash"></p-icon> Delete <kbd>⌘⌫</kbd></button>
+        </menu>
+      </div>
+
+      <h2>Text</h2>
+      <p>Paragraph text is muted, with a <a href="#">link</a>, inline <code>code</code> and <small>small print</small>.</p>
+      <p>Keys: <kbd>⌘</kbd> <kbd>K</kbd> opens the command panel, <kbd>Esc</kbd> closes it, <kbd>⇧⌘P</kbd> a chord in one cap.</p>
+      <pre>demo add --text "pre: a block of code"</pre>
+
+      <h2>Table</h2>
+      <table>
+        <thead><tr><th>Job</th><th>Status</th><th class="num">Duration</th></tr></thead>
+        <tbody>
+          <tr><td>build</td><td>passed</td><td class="num">1m 12s</td></tr>
+          <tr><td>test</td><td><p-spinner mini></p-spinner> running</td><td class="num">45s</td></tr>
+          <tr><td>lint</td><td>failed</td><td class="num">8s</td></tr>
+        </tbody>
+      </table>
+
+      <h2>List</h2>
+      <ul class="rows">
+        <li><span>A row; the first child takes the width</span><button class="quiet small">Action</button></li>
+        <li><span>Another row</span><button class="quiet icon" title="Delete"><p-icon name="trash-bin-trash"></p-icon></button></li>
+      </ul>
+    </section>
+
+    <!-- All of Solar's Linear icons, the ones Shepherd uses: <p-icon name="…">. Click one to copy its tag. -->
+    <section>
+      <form onsubmit="return false">
+        <input id="icon-search" placeholder="Search icons…" autocomplete="off">
+      </form>
+      <p id="icon-count"></p>
+      <div class="icons" id="icons"></div>
+    </section>
+  </p-tabs>
+</main>
+<script type="module">
+  import { call, on, toast, confirm } from '/_paddock/paddock.js';
+
+  const mk = (tag, props = {}) => Object.assign(document.createElement(tag), props);
+  const pIcon = (name) => { const i = document.createElement('p-icon'); i.setAttribute('name', name); return i; };
+
+  // Notes.
+  const list = document.getElementById('notes');
+  async function load() {
+    const notes = await call('list');
+    document.getElementById('empty').hidden = notes.length > 0;
+    list.replaceChildren(...notes.map((n) => {
+      const remove = mk('button', { className: 'quiet icon', title: 'Remove' });
+      remove.append(pIcon('trash-bin-trash'));
+      remove.onclick = async () => {
+        if (await confirm(`Remove “${n.text}”?`, { ok: 'Remove', danger: true })) call('remove', { id: n.id });
+      };
+      const li = mk('li');
+      li.append(mk('span', { textContent: n.text }), remove);
+      return li;
+    }));
+  }
+  document.getElementById('add').onsubmit = async (e) => {
+    e.preventDefault();
+    const input = e.target.elements.text;
+    await call('add', { text: input.value });
+    input.value = '';
+  };
+  // The CLI's changes come through here too, so an agent's note shows as it's added.
+  on('changed', load);
+  load();
+
+  // Files.
+  const browse = document.getElementById('browse');
+  const files = document.getElementById('files');
+  let parent = '';
+  async function ls(path) {
+    let folder;
+    try {
+      folder = await call('files', { path });
+    } catch (e) {
+      return toast(e.message, { kind: 'error' });
+    }
+    browse.elements.path.value = folder.path;
+    parent = folder.parent;
+    files.replaceChildren(...folder.files.map((f) => {
+      const name = mk(f.dir ? 'a' : 'span', { textContent: f.name });
+      name.prepend(pIcon(f.dir ? 'folder' : 'file'), ' ');
+      if (f.dir) {
+        name.href = '#';
+        name.onclick = (e) => { e.preventDefault(); ls(f.path); };
+      }
+      const open = mk('button', { className: 'quiet small', textContent: 'Open' });
+      open.onclick = () => call('open', { path: f.path }).catch((e) => toast(e.message, { kind: 'error' }));
+      const li = mk('li');
+      li.append(name, mk('small', { textContent: f.dir ? '' : (f.size / 1024).toFixed(1) + ' KB' }), open);
+      return li;
+    }));
+  }
+  browse.onsubmit = (e) => { e.preventDefault(); ls(browse.elements.path.value); };
+  document.getElementById('up').onclick = () => ls(parent);
+  ls('');
+
+  // Components.
+  const busy = document.getElementById('busy');
+  busy.onclick = () => {
+    busy.setAttribute('aria-busy', 'true');
+    setTimeout(() => { busy.removeAttribute('aria-busy'); toast('Saved', { kind: 'success' }); }, 2000);
+  };
+  document.getElementById('confirm').onclick = async () =>
+    toast((await confirm('Carry on?', { title: 'A question' })) ? 'Yes' : 'No');
+  document.getElementById('confirm-danger').onclick = async () =>
+    toast((await confirm('Delete everything? This can’t be undone.', { ok: 'Delete', danger: true })) ? 'Deleted (not really)' : 'Kept');
+  document.getElementById('dialog-open').onclick = () => document.getElementById('dialog').showModal();
+  document.getElementById('toast').onclick = () => toast('Something happened');
+  document.getElementById('toast-success').onclick = () => toast('Saved', { kind: 'success' });
+  document.getElementById('toast-error').onclick = () => toast('No such file', { kind: 'error' });
+  document.getElementById('menu').onclick = (e) => {
+    const item = e.target.closest('button');
+    if (item) toast(item.textContent.trim());
+  };
+
+  // Icons: drawn on demand, the first 300 that match.
+  const names = await fetch('/_paddock/icons.json').then((r) => r.json());
+  const grid = document.getElementById('icons');
+  function showIcons(q) {
+    const found = names.filter((n) => n.includes(q.trim().toLowerCase()));
+    document.getElementById('icon-count').textContent =
+      `${found.length} of ${names.length}` + (found.length > 300 ? ', the first 300 shown' : '');
+    grid.replaceChildren(...found.slice(0, 300).map((n) => {
+      const b = mk('button', { className: 'quiet', title: `<p-icon name="${n}">` });
+      b.append(pIcon(n), n);
+      b.onclick = () => navigator.clipboard.writeText(`<p-icon name="${n}"></p-icon>`).then(() => toast('Copied ' + n));
+      return b;
+    }));
+  }
+  document.getElementById('icon-search').oninput = (e) => showIcons(e.target.value);
+  showIcons('');
+</script>
+</body>
+</html>

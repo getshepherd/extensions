@@ -83,7 +83,7 @@ func (a *App) cli(c *command, args []string) error {
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("the service isn't running: `%s start`", a.Name)
+		return a.notRunning(st)
 	}
 	defer resp.Body.Close()
 	out, _ := io.ReadAll(resp.Body)
@@ -102,41 +102,53 @@ func (a *App) cli(c *command, args []string) error {
 	return nil
 }
 
-// skill prints, or with --install writes to ~/.claude/skills/<name>/SKILL.md, a skill that teaches agents the CLI.
+// skill prints the SKILL.md that teaches agents the CLI, for the installed binary if there is one; --install writes it
+// to ~/.claude/skills/<name>/SKILL.md (install does that too).
 func (a *App) skill(args []string) error {
-	exe, err := os.Executable()
+	exe := a.binPath()
+	if _, err := os.Stat(exe); err != nil {
+		if exe, err = os.Executable(); err != nil {
+			return err
+		}
+	}
+	if len(args) > 0 && args[0] == "--install" {
+		p, err := a.writeSkill(exe)
+		if err == nil {
+			fmt.Println(p)
+		}
+		return err
+	}
+	fmt.Print(a.skillText(exe))
+	return nil
+}
+
+func (a *App) skillPath() (string, error) {
+	home, err := os.UserHomeDir()
+	return filepath.Join(home, ".claude", "skills", a.Name, "SKILL.md"), err
+}
+
+func (a *App) writeSkill(exe string) (string, error) {
+	p, err := a.skillPath()
 	if err != nil {
-		return err
+		return "", err
 	}
-	if exe, err = filepath.EvalSymlinks(exe); err != nil {
-		return err
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		return "", err
 	}
+	return p, os.WriteFile(p, []byte(a.skillText(exe)), 0o644)
+}
+
+func (a *App) skillText(exe string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "---\nname: %s\ndescription: %s. Use the `%s` CLI to read and change it.\n---\n\n", a.Name, a.Description, a.Name)
-	fmt.Fprintf(&b, "# %s\n\n%s.\n\nA local service with a page the user may have open; every command below talks to it and prints JSON, and the page updates as you change things. If a command says the service isn't running, run `%s start`.\n\n## Commands\n", a.Name, a.Description, exe)
+	fmt.Fprintf(&b, "# %s\n\n%s.\n\nA local service with a page the user may have open; every command below talks to it and prints JSON, and the page updates as you change things. If a command says it isn't running, follow what it says.\n\n## Commands\n", a.Name, a.Description)
 	for _, c := range a.cmds {
-		fmt.Fprintf(&b, "\n### `%s %s`\n\n%s\n\n", exe, c.name, c.help)
+		fmt.Fprintf(&b, "\n### `\"%s\" %s`\n\n%s\n\n", exe, c.name, c.help) // quoted: macOS's path has a space
 		fs, _, _ := c.flags(a.Name)
 		fs.VisitAll(func(f *flag.Flag) {
 			typ, usage := flag.UnquoteUsage(f)
 			fmt.Fprintf(&b, "- `--%s %s`: %s\n", f.Name, typ, usage)
 		})
 	}
-	if len(args) == 0 || args[0] != "--install" {
-		fmt.Print(b.String())
-		return nil
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	p := filepath.Join(home, ".claude", "skills", a.Name, "SKILL.md")
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-		return err
-	}
-	if err := os.WriteFile(p, []byte(b.String()), 0o644); err != nil {
-		return err
-	}
-	fmt.Println(p)
-	return nil
+	return b.String()
 }
