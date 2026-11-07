@@ -1,9 +1,12 @@
-# paddock
+# Shepherd extensions
 
 A Shepherd extension in one Go binary: a web page (for Shepherd's Extensions, or any browser), the HTTP API behind it,
-a CLI over the same commands for agents, and the install that puts it where Shepherd finds it. Standard library only.
+a CLI over the same commands for agents, and the install that puts it where Shepherd finds it. This repo is the Go
+package that builds one, `paddock`, and a template to start from (`examples/demo`). Standard library only.
 
 ```go
+import paddock "github.com/getshepherd/extensions"
+
 //go:embed web
 var web embed.FS
 
@@ -86,11 +89,11 @@ has `call` and `on`, and importing it brings the rest. No build step, no Shadow 
 `make run` serves `examples/demo`, which shows all of it.
 
 The look is Shepherd's own (Zeron's widgets, the Geist font, 28 px controls), and the theme is CSS variables only,
-named after Shepherd's theme tokens: `--background --shell --raised --card --dialog --input --hover --selected --kbd --focus --scrollbar --scrollbar-active --border
---border-strong --text --text-muted --text-faint --accent --on-accent --danger --warning --success --on-color --scrim
---shadow --switch-thumb --switch-thumb-edge --switch-off --switch-on-edge --spinner-1..3 --font --mono --font-size`.
-The defaults are Shepherd's default themes (Ayu Light and Dark, by `prefers-color-scheme`); setting them on `:root`
-brings another.
+named after Shepherd's theme tokens: `--background --shell --raised --card --dialog --input --hover --selected --kbd
+--focus --scrollbar --scrollbar-active --border --border-strong --text --text-muted --text-faint --accent --on-accent
+--danger --warning --success --on-color --scrim --shadow --switch-thumb --switch-thumb-edge --switch-off
+--switch-on-edge --spinner-1..3 --font --mono --font-size`. The defaults are Shepherd's default themes (Ayu Light and
+Dark, by `prefers-color-scheme`); Shepherd sets them on `:root` to bring its own theme, and so can a page.
 
 ## Security
 
