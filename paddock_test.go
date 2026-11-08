@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 func TestCommandOverHTTPAndFlags(t *testing.T) {
@@ -66,6 +67,32 @@ func TestCommandOverHTTPAndFlags(t *testing.T) {
 	resp.Body.Close()
 	if c := resp.Cookies(); resp.StatusCode != 302 || len(c) != 1 || c[0].Name != "paddock-t" || c[0].Value != "secret" {
 		t.Fatalf("token to cookie: %d %v", resp.StatusCode, c)
+	}
+}
+
+func TestFaviconWithoutToken(t *testing.T) {
+	web := fstest.MapFS{"web/favicon.svg": {Data: []byte("<svg/>")}, "web/index.html": {Data: []byte("page")}}
+	a := New("t", "test", web)
+	srv := httptest.NewServer(a.handler("secret"))
+	defer srv.Close()
+	get := func(path string) int {
+		r, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Body.Close()
+		return r.StatusCode
+	}
+	if c := get("/favicon.svg"); c != 200 {
+		t.Errorf("favicon: %d", c)
+	}
+	if c := get("/favicon.ico"); c != 404 {
+		t.Errorf("no favicon.ico: %d, want the file server's 404", c)
+	}
+	for _, p := range []string{"/", "/index.html", "/favicon.svg/../index.html", "/_paddock/ping"} {
+		if c := get(p); c != 401 {
+			t.Errorf("%s: %d without the token", p, c)
+		}
 	}
 }
 

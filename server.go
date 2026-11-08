@@ -116,6 +116,11 @@ func (a *App) guard(token string, next http.Handler) http.Handler {
 			http.Error(w, "forbidden host", http.StatusForbidden)
 			return
 		}
+		// The page's icon is no secret, and Shepherd fetches it for its sidebar without the page's cookie.
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/favicon.") && !strings.Contains(r.URL.Path[1:], "/") {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if t := r.URL.Query().Get("token"); t != "" && same(t, token) {
 			http.SetCookie(w, &http.Cookie{Name: cookie, Value: token, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 			q := r.URL.Query()
