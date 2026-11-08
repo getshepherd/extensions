@@ -86,8 +86,8 @@ func TestFaviconWithoutToken(t *testing.T) {
 	if c := get("/favicon.svg"); c != 200 {
 		t.Errorf("favicon: %d", c)
 	}
-	if c := get("/favicon.ico"); c != 404 {
-		t.Errorf("no favicon.ico: %d, want the file server's 404", c)
+	if c := get("/favicon.ico"); c != 200 {
+		t.Errorf("favicon.ico: %d, want the svg in its place", c)
 	}
 	for _, p := range []string{"/", "/index.html", "/favicon.svg/../index.html", "/_paddock/ping"} {
 		if c := get(p); c != 401 {

@@ -96,6 +96,17 @@ func (a *App) handler(token string) http.Handler {
 	mux.Handle("GET /_paddock/", http.StripPrefix("/_paddock/", http.FileServerFS(files)))
 	if a.web != nil {
 		mux.Handle("GET /", http.FileServerFS(a.web))
+		// /favicon.ico is where a client looks when it can't read the page (Shepherd's sidebar, without the cookie):
+		// the extension's own favicon.ico, else its favicon.svg or .png.
+		mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+			for _, name := range []string{"favicon.ico", "favicon.svg", "favicon.png"} {
+				if _, err := fs.Stat(a.web, name); err == nil {
+					http.ServeFileFS(w, r, a.web, name)
+					return
+				}
+			}
+			http.NotFound(w, r)
+		})
 	}
 	return a.guard(token, mux)
 }
