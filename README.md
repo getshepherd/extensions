@@ -66,6 +66,10 @@ runs it. Switching is `<binary> install --start login|shepherd`, removing is `<b
 from GitHub is the release asset `<repo>-<os>-<arch>` (`.exe` on Windows) downloaded and run as `install`: the
 template's release workflow publishes those on every tag.
 
+Shepherd also tells the page what it shows: `window.shepherd` and a `shepherd` event on `window` with the same as its
+`detail`, sent once the page loads and each time it is shown. For now that is `{ "dir": "<folder>" }`, the folder of the
+pane shown under the page (`null` when none is), for a page that lists something per project.
+
 ## The page
 
 Put it in `web/` next to `main.go`. `/_paddock/paddock.css` dresses plain HTML in both themes; `/_paddock/paddock.js`
