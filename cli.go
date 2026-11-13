@@ -103,8 +103,8 @@ func (a *App) cli(c *command, args []string) error {
 }
 
 // skill prints the SKILL.md that teaches agents this extension: Shepherd asks for it (`shepherd skill <name>`) and
-// nothing is written to the user's skill folders, which another orchestrator may own. Empty when there is nothing to
-// teach: no Skill text and no commands.
+// nothing is written to the user's skill folders, which another orchestrator may own. Empty without Skill: an
+// extension whose commands are its page's business has nothing to teach agents.
 func (a *App) skill() error {
 	exe := a.binPath()
 	if _, err := os.Stat(exe); err != nil {
@@ -134,7 +134,7 @@ func (a *App) removeOldSkill() {
 }
 
 func (a *App) skillText(exe string) string {
-	if a.guide == "" && len(a.cmds) == 0 {
+	if strings.TrimSpace(a.guide) == "" {
 		return ""
 	}
 	var b strings.Builder

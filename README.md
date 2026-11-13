@@ -28,12 +28,13 @@ One command is three things at once:
 - `POST /api/add` for the page: `import { call, on } from '/_paddock/paddock.js'`, then `await call('add', { text })`
   and `on('changed', reload)`;
 - `demo add --text …` for agents and shells, printing JSON. It runs on the service, so an open page sees the change;
-- a section of the skill `demo skill` prints, which Shepherd hands to agents that ask it (`shepherd skill demo`).
+- a section of the skill `demo skill` prints, when the extension has one (below).
 
 Fields of type string, bool, int, float64 and `[]string` become flags; `--json '{…}'` takes the rest.
 
-What agents should know beyond the list of commands (when to call them, what a task looks like) goes in a `skill.md`
-beside `web/`, put before the commands:
+An extension has a skill for agents only when it says so: its text (when to call the commands, what a task looks like)
+in a `skill.md` beside `web/`, followed by the commands. Without one, the commands are the page's and the shell's, and
+agents aren't told about them. Shepherd hands a skill to agents that ask it (`shepherd skill demo`).
 
 ```go
 //go:embed skill.md
@@ -56,7 +57,7 @@ demo uninstall [--purge]   the service and the binary go; the data stays unless 
 demo url                   http://127.0.0.1:<port>/?token=…
 demo status | start | stop | logs [-f]
 demo serve                 in the foreground, as the service runs it
-demo skill                 the SKILL.md for agents: skill.md and the commands; empty when it has neither
+demo skill                 the SKILL.md for agents: skill.md, then the commands; empty without skill.md
 demo <command> [flags]
 ```
 
