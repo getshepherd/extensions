@@ -22,6 +22,11 @@ import (
 //go:embed web
 var web embed.FS
 
+// What agents should know beyond the commands: `demo skill` prints it before them.
+//
+//go:embed skill.md
+var skill string
+
 type Note struct {
 	ID   int       `json:"id"`
 	Text string    `json:"text"`
@@ -30,6 +35,7 @@ type Note struct {
 
 func main() {
 	app := paddock.New("demo", "An example Shepherd web page: notes, this machine's files, every UI element", web)
+	app.Skill(skill)
 	s := &store{path: filepath.Join(app.Dir(), "notes.json")}
 
 	paddock.Command(app, "list", "List the notes, oldest first", func(_ *paddock.Ctx, _ struct{}) ([]Note, error) {

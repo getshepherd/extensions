@@ -102,46 +102,55 @@ func (a *App) cli(c *command, args []string) error {
 	return nil
 }
 
-// skill prints the SKILL.md that teaches agents the CLI, for the installed binary if there is one; --install writes it
-// to ~/.claude/skills/<name>/SKILL.md (install does that too).
-func (a *App) skill(args []string) error {
+// skill prints the SKILL.md that teaches agents this extension: Shepherd asks for it (`shepherd skill <name>`) and
+// nothing is written to the user's skill folders, which another orchestrator may own. Empty when there is nothing to
+// teach: no Skill text and no commands.
+func (a *App) skill() error {
 	exe := a.binPath()
 	if _, err := os.Stat(exe); err != nil {
 		if exe, err = os.Executable(); err != nil {
 			return err
 		}
 	}
-	if len(args) > 0 && args[0] == "--install" {
-		p, err := a.writeSkill(exe)
-		if err == nil {
-			fmt.Println(p)
-		}
-		return err
-	}
 	fmt.Print(a.skillText(exe))
 	return nil
 }
 
-func (a *App) skillPath() (string, error) {
-	home, err := os.UserHomeDir()
-	return filepath.Join(home, ".claude", "skills", a.Name, "SKILL.md"), err
-}
+// oldSkillMark is in every SKILL.md paddock used to write to ~/.claude/skills/<name>: what tells it from a skill the
+// user wrote under the same name.
+const oldSkillMark = "A local service with a page the user may have open"
 
-func (a *App) writeSkill(exe string) (string, error) {
-	p, err := a.skillPath()
+// removeOldSkill takes away the ~/.claude/skills/<name> that paddock wrote before skills moved into the binary, and
+// only that one.
+func (a *App) removeOldSkill() {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return
 	}
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-		return "", err
+	dir := filepath.Join(home, ".claude", "skills", a.Name)
+	if b, err := os.ReadFile(filepath.Join(dir, "SKILL.md")); err == nil && strings.Contains(string(b), oldSkillMark) {
+		os.RemoveAll(dir)
 	}
-	return p, os.WriteFile(p, []byte(a.skillText(exe)), 0o644)
 }
 
 func (a *App) skillText(exe string) string {
+	if a.guide == "" && len(a.cmds) == 0 {
+		return ""
+	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "---\nname: %s\ndescription: %s. Use the `%s` CLI to read and change it.\n---\n\n", a.Name, a.Description, a.Name)
-	fmt.Fprintf(&b, "# %s\n\n%s.\n\nA local service with a page the user may have open; every command below talks to it and prints JSON, and the page updates as you change things. If a command says it isn't running, follow what it says.\n\n## Commands\n", a.Name, a.Description)
+	use := ""
+	if len(a.cmds) > 0 {
+		use = fmt.Sprintf(" Use the `%s` CLI to read and change it.", a.Name)
+	}
+	fmt.Fprintf(&b, "---\nname: %s\ndescription: %s.%s\n---\n\n", a.Name, a.Description, use)
+	fmt.Fprintf(&b, "# %s\n\n%s.\n\n", a.Name, a.Description)
+	if a.guide != "" {
+		b.WriteString(strings.TrimSpace(a.guide) + "\n\n")
+	}
+	if len(a.cmds) == 0 {
+		return b.String()
+	}
+	b.WriteString("A local service with a page the user may have open; every command below talks to it and prints JSON, and the page updates as you change things. If a command says it isn't running, follow what it says.\n\n## Commands\n")
 	for _, c := range a.cmds {
 		fmt.Fprintf(&b, "\n### `\"%s\" %s`\n\n%s\n\n", exe, c.name, c.help) // quoted: macOS's path has a space
 		fs, _, _ := c.flags(a.Name)
