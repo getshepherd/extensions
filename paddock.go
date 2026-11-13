@@ -54,8 +54,9 @@ func New(name, description string, web fs.FS) *App {
 	return a
 }
 
-// Skill adds what agents should know beyond the commands' list (when to use them, what a task looks like) to the
-// skill `<binary> skill` prints; usually a skill.md beside web/, `//go:embed skill.md` into a string.
+// Skill gives the extension a skill for agents: text (when to use it, what a task looks like), then its commands, as
+// `<binary> skill` prints it. Without it the extension has none, its commands being only its page's. Usually a
+// skill.md beside web/, `//go:embed skill.md` into a string.
 func (a *App) Skill(text string) { a.guide = text }
 
 var builtins = []string{"serve", "install", "uninstall", "start", "stop", "status", "logs", "url", "skill", "help"}

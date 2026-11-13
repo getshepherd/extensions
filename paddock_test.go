@@ -144,11 +144,13 @@ func TestPlaceCopiesTheBinaryIntoShepherdsExtensions(t *testing.T) {
 	}
 }
 
-func TestSkillIsTheGuideThenTheCommandsAndEmptyWithNeither(t *testing.T) {
+func TestSkillIsTheGuideThenTheCommandsAndNoneWithoutTheGuide(t *testing.T) {
 	a := New("t", "test", nil)
+	Command(a, "list", "List the notes", func(_ *Ctx, _ struct{}) ([]string, error) { return nil, nil })
 	if s := a.skillText("/bin/t"); s != "" {
-		t.Fatalf("nothing to teach: %q", s)
+		t.Fatalf("commands alone are the page's: %q", s)
 	}
+	a = New("t", "test", nil)
 	a.Skill("Add a note when asked.\n")
 	if s := a.skillText("/bin/t"); !strings.HasPrefix(s, "---\nname: t\ndescription: test.") || !strings.Contains(s, "Add a note when asked.") || strings.Contains(s, "## Commands") {
 		t.Fatalf("the guide alone: %q", s)
