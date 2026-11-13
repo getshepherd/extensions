@@ -71,7 +71,7 @@ Each extension is a folder in Shepherd's own config folder, `extensions/<name>/`
 Shepherd lists `<config dir>/extensions/*/` that hold `state.json` and the binary `<name>` (`<name>.exe` on Windows):
 
 ```json
-{ "name": "demo", "description": "…", "port": 50856, "token": "…", "start": "login" }
+{ "name": "demo", "description": "…", "port": 50856, "token": "…", "start": "login", "show": ["panel"] }
 ```
 
 Its page is `http://127.0.0.1:<port>/?token=<token>`. With `"start": "shepherd"`, Shepherd runs `<binary> serve`
@@ -83,6 +83,11 @@ template's release workflow publishes those on every tag.
 Agents learn an extension from Shepherd: `shepherd skill` lists the extensions whose `<binary> skill` prints
 something, with the `description` of its front matter, and `shepherd skill <name>` prints that skill whole.
 Installing one is all it takes for agents to find it.
+
+Where the page shows is the extension's call, `app.Show(…)`, which `show` carries: `paddock.Sidebar`, listed in
+Shepherd's sidebar, the page in place of the panes, for one about everything (all the pull requests, the
+automations); `paddock.Panel`, offered in a workspace's right panel, beside the panes, for one about that workspace
+(its task, its worktree); both when it doesn't say.
 
 A page opens in Shepherd's main area, from the sidebar, or as a tab of a workspace's right panel, from its `+`. Shepherd
 tells it what it shows: `window.shepherd` and a `shepherd` event on `window` with the same as its `detail`, sent once

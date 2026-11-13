@@ -186,3 +186,22 @@ func TestOnlyTheSkillPaddockWroteIsRemoved(t *testing.T) {
 		t.Fatal("the user's skill went")
 	}
 }
+
+func TestShowIsWrittenWithTheState(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", "")
+	a := New("t", "test", nil)
+	a.Show(Panel)
+	if _, err := a.ensureState(0); err != nil {
+		t.Fatal(err)
+	}
+	if st, err := a.loadState(); err != nil || len(st.Show) != 1 || st.Show[0] != Panel {
+		t.Fatalf("the state's show: %+v %v", st, err)
+	}
+	defer func() {
+		if recover() == nil {
+			t.Fatal("a place that isn't one was taken")
+		}
+	}()
+	a.Show("dock")
+}

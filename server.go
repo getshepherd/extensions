@@ -20,13 +20,15 @@ import (
 var ui embed.FS
 
 // state is what the service, the CLI and Shepherd share: where the server listens, the token that lets one in, and
-// what Shepherd lists: the name, the description, and when it runs (startLogin or startShepherd).
+// what Shepherd lists: the name, the description, when it runs (startLogin or startShepherd) and where its page shows
+// (Sidebar, Panel; none is both).
 type state struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Port        int    `json:"port"`
-	Token       string `json:"token"`
-	Start       string `json:"start"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Port        int      `json:"port"`
+	Token       string   `json:"token"`
+	Start       string   `json:"start"`
+	Show        []string `json:"show,omitempty"`
 }
 
 // When an extension runs: as a service from login on, or while Shepherd runs (Shepherd starts `<binary> serve`).
@@ -54,13 +56,13 @@ func (a *App) saveState(s state) error {
 }
 
 // ensureState keeps the port and token picked before, so the URL saved in Shepherd keeps working; port, if not 0,
-// replaces the port. The name and description follow the binary.
+// replaces the port. The name, the description and where it shows follow the binary.
 func (a *App) ensureState(port int) (state, error) {
 	s, err := a.loadState()
 	if err != nil {
 		s = state{Token: rand.Text(), Start: startLogin}
 	}
-	s.Name, s.Description = a.Name, a.Description
+	s.Name, s.Description, s.Show = a.Name, a.Description, a.show
 	if port != 0 {
 		s.Port = port
 	}

@@ -21,6 +21,7 @@ type App struct {
 	Name, Description string
 	web               fs.FS
 	guide             string
+	show              []string
 	cmds              []*command
 	mu                sync.Mutex
 	subs              map[chan string]struct{}
@@ -58,6 +59,25 @@ func New(name, description string, web fs.FS) *App {
 // `<binary> skill` prints it. Without it the extension has none, its commands being only its page's. Usually a
 // skill.md beside web/, `//go:embed skill.md` into a string.
 func (a *App) Skill(text string) { a.guide = text }
+
+// Where Shepherd shows an extension's page: in its sidebar, the page in place of the panes, or as a tab of a
+// workspace's right panel, beside them.
+const (
+	Sidebar = "sidebar"
+	Panel   = "panel"
+)
+
+// Show says where Shepherd shows the page: Sidebar, Panel or both, which is also what an extension that never says
+// gets. A page about the workspace beside it (its worktree, its project) is a Panel's; one about everything, the
+// Sidebar's.
+func (a *App) Show(places ...string) {
+	for _, p := range places {
+		if p != Sidebar && p != Panel {
+			panic("paddock: Show takes paddock.Sidebar or paddock.Panel, not " + p)
+		}
+	}
+	a.show = places
+}
 
 var builtins = []string{"serve", "install", "uninstall", "start", "stop", "status", "logs", "url", "skill", "help"}
 
