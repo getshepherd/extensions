@@ -143,3 +143,44 @@ func TestPlaceCopiesTheBinaryIntoShepherdsExtensions(t *testing.T) {
 		}
 	}
 }
+
+func TestSkillIsTheGuideThenTheCommandsAndEmptyWithNeither(t *testing.T) {
+	a := New("t", "test", nil)
+	if s := a.skillText("/bin/t"); s != "" {
+		t.Fatalf("nothing to teach: %q", s)
+	}
+	a.Skill("Add a note when asked.\n")
+	if s := a.skillText("/bin/t"); !strings.HasPrefix(s, "---\nname: t\ndescription: test.") || !strings.Contains(s, "Add a note when asked.") || strings.Contains(s, "## Commands") {
+		t.Fatalf("the guide alone: %q", s)
+	}
+	Command(a, "add", "Add a note", func(_ *Ctx, in struct {
+		Text string `json:"text" help:"the text"`
+	}) (string, error) {
+		return in.Text, nil
+	})
+	s := a.skillText("/bin/t")
+	if g, c := strings.Index(s, "Add a note when asked."), strings.Index(s, "## Commands"); g < 0 || c < g || !strings.Contains(s, "- `--text string`: the text") {
+		t.Fatalf("the guide, then the commands: %q", s)
+	}
+}
+
+func TestOnlyTheSkillPaddockWroteIsRemoved(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	write := func(name, text string) string {
+		dir := filepath.Join(home, ".claude", "skills", name)
+		os.MkdirAll(dir, 0o755)
+		os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte(text), 0o644)
+		return dir
+	}
+	old := write("ours", "---\nname: ours\n---\n\n"+oldSkillMark+"; every command…")
+	mine := write("mine", "---\nname: mine\n---\nthe user's own")
+	New("ours", "", nil).removeOldSkill()
+	New("mine", "", nil).removeOldSkill()
+	if _, err := os.Stat(old); !os.IsNotExist(err) {
+		t.Fatal("paddock's old skill stayed")
+	}
+	if _, err := os.Stat(mine); err != nil {
+		t.Fatal("the user's skill went")
+	}
+}

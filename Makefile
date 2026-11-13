@@ -18,7 +18,7 @@ run: example
 	@echo "open: $$($(BIN) url)"
 	$(BIN) serve
 
-# копирует бинарник в extensions Shepherd, пишет skill и запускает; печатает URL.
+# копирует бинарник в extensions Shepherd и запускает; печатает URL.
 # START=shepherd — только пока открыт Shepherd, без launchd/systemd.
 install: example
 	$(BIN) install $(if $(START),--start $(START))

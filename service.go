@@ -43,7 +43,7 @@ func esc(s string) string {
 }
 
 // install puts the extension where Shepherd finds it and sets it running: the binary copied into Dir (so `go run .
-// install` works, and installing again is an update), its state, the skill, and the service when it runs from login.
+// install` works, and installing again is an update), its state, and the service when it runs from login. A skill an older paddock wrote to ~/.claude/skills goes.
 func (a *App) install(args []string) error {
 	fs := flag.NewFlagSet(a.Name+" install", flag.ContinueOnError)
 	port := fs.Int("port", 0, "the port to listen on (default: the one picked before, else a free one)")
@@ -79,9 +79,7 @@ func (a *App) install(args []string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := a.writeSkill(exe); err != nil {
-		return err
-	}
+	a.removeOldSkill()
 	fmt.Println(st.url())
 	return nil
 }
@@ -187,7 +185,8 @@ func (a *App) removeService() error {
 	return nil
 }
 
-// uninstall takes the extension out of Shepherd and the system: the service, the skill and the binary. Its data and
+// uninstall takes the extension out of Shepherd and the system: the service and the binary (and an older paddock's
+// skill). Its data and
 // state stay in Dir, so installing again brings back the same notes on the same URL; --purge removes Dir too.
 func (a *App) uninstall(args []string) error {
 	fs := flag.NewFlagSet(a.Name+" uninstall", flag.ContinueOnError)
@@ -198,9 +197,7 @@ func (a *App) uninstall(args []string) error {
 	if err := a.removeService(); err != nil {
 		return err
 	}
-	if p, err := a.skillPath(); err == nil {
-		os.RemoveAll(filepath.Dir(p))
-	}
+	a.removeOldSkill()
 	if *purge {
 		return os.RemoveAll(a.Dir())
 	}

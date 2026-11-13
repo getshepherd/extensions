@@ -28,22 +28,35 @@ One command is three things at once:
 - `POST /api/add` for the page: `import { call, on } from '/_paddock/paddock.js'`, then `await call('add', { text })`
   and `on('changed', reload)`;
 - `demo add --text …` for agents and shells, printing JSON. It runs on the service, so an open page sees the change;
-- a section of the skill `demo install` writes to `~/.claude/skills/demo/SKILL.md`.
+- a section of the skill `demo skill` prints, which Shepherd hands to agents that ask it (`shepherd skill demo`).
 
 Fields of type string, bool, int, float64 and `[]string` become flags; `--json '{…}'` takes the rest.
+
+What agents should know beyond the list of commands (when to call them, what a task looks like) goes in a `skill.md`
+beside `web/`, put before the commands:
+
+```go
+//go:embed skill.md
+var skill string
+
+app.Skill(skill)
+```
+
+The skill lives in the binary: nothing is written to `~/.claude/skills` or any other agent's folder, which may belong
+to another orchestrator.
 
 ## The binary
 
 ```
 demo install [--port N] [--start login|shepherd]
-                           copies itself into Shepherd's extensions, writes the skill, starts it; prints the URL.
+                           copies itself into Shepherd's extensions, starts it; prints the URL.
                            login (default): a launchd agent (macOS) or systemd user unit (Linux), from login on;
                            shepherd: no service, Shepherd runs it while it is open. Installing again updates it.
-demo uninstall [--purge]   the service, the skill and the binary go; the data stays unless --purge
+demo uninstall [--purge]   the service and the binary go; the data stays unless --purge
 demo url                   http://127.0.0.1:<port>/?token=…
 demo status | start | stop | logs [-f]
 demo serve                 in the foreground, as the service runs it
-demo skill [--install]
+demo skill                 the SKILL.md for agents: skill.md and the commands; empty when it has neither
 demo <command> [flags]
 ```
 
@@ -65,6 +78,27 @@ while it is open (output to `log` in the folder) and restarts it when the binary
 runs it. Switching is `<binary> install --start login|shepherd`, removing is `<binary> uninstall`, and installing
 from GitHub is the release asset `<repo>-<os>-<arch>` (`.exe` on Windows) downloaded and run as `install`: the
 template's release workflow publishes those on every tag.
+
+Agents learn an extension from Shepherd: `shepherd skill` lists the extensions whose `<binary> skill` prints
+something, with the `description` of its front matter, and `shepherd skill <name>` prints that skill whole.
+Installing one is all it takes for agents to find it.
+
+A page opens in Shepherd's main area, from the sidebar, or as a tab of a workspace's right panel, from its `+`. Shepherd
+tells it what it shows: `window.shepherd` and a `shepherd` event on `window` with the same as its `detail`, sent once
+the page loads, each time it is shown and when what it shows changes:
+
+```json
+{
+  "dir": "/Users/me/.herdr/worktrees/app/fix-login",
+  "workspace": { "id": "w1", "label": "fix-login" },
+  "project": { "root": "/Users/me/src/app", "key": "/Users/me/src/app/.git" },
+  "worktree": { "path": "/Users/me/.herdr/worktrees/app/fix-login", "branch": "fix-login", "linked": true }
+}
+```
+
+In the right panel that is the panel's workspace; in the main area, the workspace shown. `dir` is the folder of the
+workspace's focused pane; `project` and `worktree` are `null` for a workspace outside git, `branch` for a detached
+HEAD, and all of it when no workspace is shown.
 
 ## The page
 

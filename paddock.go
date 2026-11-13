@@ -20,6 +20,7 @@ import (
 type App struct {
 	Name, Description string
 	web               fs.FS
+	guide             string
 	cmds              []*command
 	mu                sync.Mutex
 	subs              map[chan string]struct{}
@@ -52,6 +53,10 @@ func New(name, description string, web fs.FS) *App {
 	}
 	return a
 }
+
+// Skill adds what agents should know beyond the commands' list (when to use them, what a task looks like) to the
+// skill `<binary> skill` prints; usually a skill.md beside web/, `//go:embed skill.md` into a string.
+func (a *App) Skill(text string) { a.guide = text }
 
 var builtins = []string{"serve", "install", "uninstall", "start", "stop", "status", "logs", "url", "skill", "help"}
 
@@ -160,7 +165,7 @@ func (a *App) run(args []string) error {
 		}
 		return err
 	case "skill":
-		return a.skill(args[1:])
+		return a.skill()
 	case "help", "-h", "--help":
 		a.usage()
 		return nil
@@ -174,14 +179,14 @@ func (a *App) run(args []string) error {
 func (a *App) usage() {
 	fmt.Printf("%s: %s\n\nSetup:\n", a.Name, a.Description)
 	for _, l := range [][2]string{
-		{"install [--port N]", "copy into Shepherd's extensions, write the skill, start it; prints the page's URL"},
+		{"install [--port N]", "copy into Shepherd's extensions and start it; prints the page's URL"},
 		{"  [--start login|shepherd]", "run as a service from login on (default), or only while Shepherd runs"},
 		{"uninstall [--purge]", "remove it (its data stays in " + a.Dir() + " unless --purge)"},
 		{"start | stop | status", "the service; stop lasts until the next login"},
 		{"logs [-f]", "its output"},
 		{"url", "the page's address, for Shepherd or a browser"},
 		{"serve", "run in the foreground"},
-		{"skill [--install]", "the SKILL.md that teaches agents this CLI"},
+		{"skill", "the SKILL.md that teaches agents this CLI (Shepherd asks for it)"},
 	} {
 		fmt.Printf("  %-26s %s\n", l[0], l[1])
 	}
